@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <div id="app">
+    什么也没有干的字符串
+    <p class="cl"> 测试函数表达式：{{ title.split('').reverse().join('') }} </p>
+    <p> 测试布尔值：{{ ok }} </p>
+    <p> 测试数字相加：{{ number + 1}} </p>
+    <input type="button" value="add" m-on:click="add">
+    <input type="button" value="minus" m-on:click="minus(3,$event)">
+    <input type="button" value="alert" m-on:click="alert(3)">
+    <p> 测试方法调用：{{ get() }}</p>
+    <p> 测试方法调用（带参数）：{{ print('somewords') }}</p>
+    <p> 测试数组：{{ color[2] }}</p>
+    <p> 测试对象：{{ fruits.apple }}</p>
+    <p m-for="i in color">color: {{ i }}</p>
+    <p m-show="ok">测试m-show ok</p>
+    <p m-show="!ok">测试m-show no ok</p>
+  </div>
+
+  <script src="dist/mou.js"></script>
+</body>
+</html>

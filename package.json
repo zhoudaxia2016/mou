@@ -1,0 +1,15 @@
+{
+  "name": "mou",
+  "version": "1.0.0",
+  "description": "模仿vuejs",
+  "main": "mou.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mou",
+    "vue"
+  ],
+  "author": "maozz",
+  "license": "ISC"
+}
