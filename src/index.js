@@ -1,6 +1,88 @@
-import Watcher from './watcher'
+function Watcher(update){
+  /**
+   * 监视器，通过get添加到dep
+   *
+   * @param {Function} update
+   */
 
-export default function compile(node,data){
+  this.update = update;
+  Watcher.tmp = this;
+  this.update();
+  Watcher.tmp = null;
+}
+
+function observe(data){
+  /**
+   * 遍历data，将大data所有属性设置为响应式的
+   * 
+   * @param {Object} data
+   */
+
+  if (data && typeof data === 'object'){
+    Object.keys(data).forEach(function(key){
+      defineReactive(data,key,data[key]);
+    });
+  }
+}
+
+
+function defineReactive(data,key,val){
+  /**
+   * 响应式属性设置的主要函数
+   *
+   * @param {Object} data
+   * @param {String} key
+   * @param {-} val
+   */
+
+  var dep = new Dep();
+  Object.defineProperty(data,key,{
+    enumerable: true,
+    configurable: false,
+    get: function(){
+      if (Watcher.tmp){
+        dep.addCb(Watcher.tmp);
+      }
+      return val;
+    },
+    set: function(newVal){
+      val = newVal;
+      dep.notify();
+    }
+  });
+  if (val && typeof val === 'object'){
+    Object.keys(val).forEach(function(k){
+      defineReactive(val,k,val[k]);
+    });
+  }
+}
+
+function Dep(){
+  /**
+   * 保存更新函数数组
+   */
+
+  this.watchers = [];
+}
+
+Dep.prototype.notify = function(){
+  /**
+   * 通知更新函数更新
+   */
+
+  this.watchers.forEach(function(watcher){
+    watcher.update();
+  });
+};
+
+Dep.prototype.addCb = function(watcher){
+  /**
+   * 添加更新函数
+   */
+
+  this.watchers.push(watcher);
+}
+function compile(node,data){
   /**
    * 模板编译函数
    * 
@@ -18,7 +100,8 @@ export default function compile(node,data){
   }
 
   // 遍历所有子节点
-  var nodes = [].slice.call(node.childNodes).filter(item => item.nodeType === 1 || item.nodeType === 3);
+  var nodes = node.childNodes;
+  console.log(nodes)
   nodes.forEach(function(child){
     // 若是元素节点，递归编译
     if (child.nodeType === 1){
@@ -30,6 +113,55 @@ export default function compile(node,data){
       compileText(child,data);
     }
   });
+}
+
+
+function Mou(options){
+  /**
+   * Mou实例对象
+   *
+   * @param {Object} options
+   *                - {String} el
+   *                - {Object} data
+   *                - {Object} methods
+   */
+
+  this.el = options.el;
+  for (var fn in options.methods){
+    options.methods[fn] = options.methods[fn].bind(options.data);
+  }
+  this.data = Object.assign(options.data,options.methods);
+  observe(this.data);
+  compile(document.querySelector(this.el),this.data);
+}
+
+var options = {
+  el: '#app',
+  data:{
+    title:'This is a title',
+    content:'This is content!!!',
+    number: 10,
+    ok: false,
+    color: ['red','blue','green', 'black'],
+    fruits: {apple:'apple',banana:'banana'},
+  },
+  methods:{
+    get: function(){return 'Great!';},
+    print: function(a){return a;},
+    add: function(){
+      this.number ++;
+    },
+    minus: function(n,e){console.log(e);this.number -= n;},
+  },
+}
+
+var mou = new Mou(options);
+
+mou.data.title = 'title'
+mou.data.ok = true;
+mou.data.get = function(){return 'Bad!';}
+mou.data.add = function(){
+  this.number += 5;
 }
 
 function compileText(node,data){

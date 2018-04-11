@@ -30,7 +30,7 @@ var options = {
     content:'This is content!!!',
     number: 10,
     ok: false,
-    color: ['red','blue','green'],
+    color: ['red','blue','green', 'black'],
     fruits: {apple:'apple',banana:'banana'},
   },
   methods:{
