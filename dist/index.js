@@ -82,11 +82,11 @@
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return compile; });
 /* harmony import */ var _watcher__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./watcher */ "./src/watcher.js");
-/* harmony import */ var _directives_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./directives.js */ "./src/directives.js");
+/* harmony import */ var _directives__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./directives */ "./src/directives.js");
 
 
 
-function compile(node,data){
+function compile (node, data) {
   /**
    * 模板编译函数
    * 
@@ -102,15 +102,15 @@ function compile(node,data){
   if (!node.childNodes) {
     return
   }
-  var nodes = [].slice.call(node.childNodes).filter(item => item.nodeType === 1 || item.nodeType === 3);
+  let nodes = [].slice.call(node.childNodes).filter(item => item.nodeType === 1 || item.nodeType === 3)
   nodes.forEach(function(child){
     // 若是元素节点，递归编译
-    if (child.nodeType === 1){
+    if (child.nodeType === 1) {
       compile(child, data)
     }
 
     // 若元素是文本节点，编译为更新函数，保存到data对应的属性里面
-    else if (child.nodeType === 3){
+    else if (child.nodeType === 3) {
       compileText(child, data)
     }
   });
@@ -125,8 +125,8 @@ function compileDirectives (node, data) {
       let [name, arg] = attr.nodeName.split(':')
       let value = attr.nodeValue
 
-      if (name in _directives_js__WEBPACK_IMPORTED_MODULE_1__["default"]) {
-	let cb = _directives_js__WEBPACK_IMPORTED_MODULE_1__["default"][name].callback
+      if (name in _directives__WEBPACK_IMPORTED_MODULE_1__["default"]) {
+	let cb = _directives__WEBPACK_IMPORTED_MODULE_1__["default"][name].callback
 	if (cb) {
 	  cb(node, arg, value, data)
 	}
@@ -135,26 +135,26 @@ function compileDirectives (node, data) {
   }
 }
 
-function compileText(node,data){
+function compileText (node, data) {
   /**
    * 编译文本节点
    *
    * @param {Node} node
    */
 
-  var p = /{{([^}]*)}}/g;
-  var text = node.nodeValue.replace(p,function(m,exp){
-    return "`+(" + exp + ")+`";
-  });
+  let p = /{{([^}]*)}}/g
+  let text = node.nodeValue.replace(p, (m, exp) => {
+    return "`+(" + exp + ")+`"
+  })
 
-  var code = ["var tmp = '';"];
-  code.push("with(data){tmp = tmp + `");
-  code.push(text + "`};");
-  code.push("return tmp;");
-  code = code.join('');
+  let code = ["let tmp = '';"]
+  code.push("with(data){tmp = tmp + `")
+  code.push(text + "`};")
+  code.push("return tmp;")
+  code = code.join('')
 
-  var fn = new Function('data',code);
-  new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](function(){node.nodeValue = fn(data);});
+  let fn = new Function('data',code)
+  new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](() => { node.nodeValue = fn(data) })
 }
 
 
@@ -264,10 +264,10 @@ directives['m-for'] = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _mou_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./mou.js */ "./src/mou.js");
+/* harmony import */ var _mou__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./mou */ "./src/mou.js");
 
 
-var options = {
+let options = {
   el: '#app',
   data:{
     title:'This is a title',
@@ -275,23 +275,25 @@ var options = {
     number: 10,
     ok: false,
     color: ['red','blue','green', 'black'],
-    fruits: {apple:'apple',banana:'banana'},
+    fruits: {apple: 'apple',banana: 'banana'},
   },
   methods:{
-    get: function(){return 'Great!';},
-    print: function(a){return a;},
-    add: function(){
+    get: function () { return 'Great!' },
+    print: function (a) { return a },
+    add: function () {
       this.number ++;
     },
-    minus: function(n,e){this.number -= n;},
+    minus: function (n) { this.number -= n },
   },
 }
-var mou = new _mou_js__WEBPACK_IMPORTED_MODULE_0__["default"](options);
+
+let mou = new _mou__WEBPACK_IMPORTED_MODULE_0__["default"](options)
+
 mou.data.title = 'title'
 mou.data.ok = true
 mou.data.get = () => 'Bad!'
 mou.data.add = function(){
-  this.number += 5;
+  this.number += 5
 }
 
 
@@ -355,10 +357,9 @@ Mou.prototype.mount = function (ele) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _watcher__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./watcher */ "./src/watcher.js");
-//var Watcher = require('./watcher')
 
 
-/* harmony default export */ __webpack_exports__["default"] = (function(data){
+/* harmony default export */ __webpack_exports__["default"] = (function (data) {
   /**
    * 遍历data，将大data所有属性设置为响应式的
    * 
@@ -366,14 +367,14 @@ __webpack_require__.r(__webpack_exports__);
    */
 
   if (data && typeof data === 'object'){
-    Object.keys(data).forEach(function(key){
-      defineReactive(data,key,data[key]);
-    });
+    Object.keys(data).forEach(key => {
+      defineReactive(data, key, data[key])
+    })
   }
 });
 
 
-function defineReactive(data,key,val){
+function defineReactive (data, key, val) {
   /**
    * 响应式属性设置的主要函数
    *
@@ -382,52 +383,52 @@ function defineReactive(data,key,val){
    * @param {-} val
    */
 
-  var dep = new Dep();
-  Object.defineProperty(data,key,{
+  var dep = new Dep()
+  Object.defineProperty(data, key, {
     enumerable: true,
     configurable: false,
-    get: function(){
+    get () {
       if (_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp){
-        dep.addCb(_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp);
+        dep.addCb(_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp)
       }
-      return val;
+      return val
     },
-    set: function(newVal){
-      val = newVal;
-      dep.notify();
+    set (newVal) {
+      val = newVal
+      dep.notify()
     }
-  });
+  })
   if (val && typeof val === 'object'){
-    Object.keys(val).forEach(function(k){
-      defineReactive(val,k,val[k]);
-    });
+    Object.keys(val).forEach(k => {
+      defineReactive(val, k, val[k])
+    })
   }
 }
 
-function Dep(){
+function Dep () {
   /**
    * 保存更新函数数组
    */
 
-  this.watchers = [];
+  this.watchers = []
 }
 
-Dep.prototype.notify = function(){
+Dep.prototype.notify = function () {
   /**
    * 通知更新函数更新
    */
 
-  this.watchers.forEach(function(watcher){
-    watcher.update();
-  });
+  this.watchers.forEach(watcher => {
+    watcher.update()
+  })
 };
 
-Dep.prototype.addCb = function(watcher){
+Dep.prototype.addCb = function (watcher) {
   /**
    * 添加更新函数
    */
 
-  this.watchers.push(watcher);
+  this.watchers.push(watcher)
 }
 
 
@@ -443,17 +444,17 @@ Dep.prototype.addCb = function(watcher){
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Watcher; });
-function Watcher(update){
+function Watcher (update) {
   /**
    * 监视器，通过get添加到dep
    *
    * @param {Function} update
    */
 
-  this.update = update;
-  Watcher.tmp = this;
-  this.update();
-  Watcher.tmp = null;
+  this.update = update
+  Watcher.tmp = this
+  this.update()
+  Watcher.tmp = null
 }
 
 

@@ -1,7 +1,6 @@
-//var Watcher = require('./watcher')
 import Watcher from './watcher'
 
-export default function(data){
+export default function (data) {
   /**
    * 遍历data，将大data所有属性设置为响应式的
    * 
@@ -9,14 +8,14 @@ export default function(data){
    */
 
   if (data && typeof data === 'object'){
-    Object.keys(data).forEach(function(key){
-      defineReactive(data,key,data[key]);
-    });
+    Object.keys(data).forEach(key => {
+      defineReactive(data, key, data[key])
+    })
   }
 }
 
 
-function defineReactive(data,key,val){
+function defineReactive (data, key, val) {
   /**
    * 响应式属性设置的主要函数
    *
@@ -25,50 +24,50 @@ function defineReactive(data,key,val){
    * @param {-} val
    */
 
-  var dep = new Dep();
-  Object.defineProperty(data,key,{
+  var dep = new Dep()
+  Object.defineProperty(data, key, {
     enumerable: true,
     configurable: false,
-    get: function(){
+    get () {
       if (Watcher.tmp){
-        dep.addCb(Watcher.tmp);
+        dep.addCb(Watcher.tmp)
       }
-      return val;
+      return val
     },
-    set: function(newVal){
-      val = newVal;
-      dep.notify();
+    set (newVal) {
+      val = newVal
+      dep.notify()
     }
-  });
+  })
   if (val && typeof val === 'object'){
-    Object.keys(val).forEach(function(k){
-      defineReactive(val,k,val[k]);
-    });
+    Object.keys(val).forEach(k => {
+      defineReactive(val, k, val[k])
+    })
   }
 }
 
-function Dep(){
+function Dep () {
   /**
    * 保存更新函数数组
    */
 
-  this.watchers = [];
+  this.watchers = []
 }
 
-Dep.prototype.notify = function(){
+Dep.prototype.notify = function () {
   /**
    * 通知更新函数更新
    */
 
-  this.watchers.forEach(function(watcher){
-    watcher.update();
-  });
+  this.watchers.forEach(watcher => {
+    watcher.update()
+  })
 };
 
-Dep.prototype.addCb = function(watcher){
+Dep.prototype.addCb = function (watcher) {
   /**
    * 添加更新函数
    */
 
-  this.watchers.push(watcher);
+  this.watchers.push(watcher)
 }
