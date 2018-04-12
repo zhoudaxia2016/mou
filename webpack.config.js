@@ -1,9 +1,10 @@
 var path = require('path');
 
 module.exports = {
-  entry: './src/mou.js',
+  entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'mou.js'
+    filename: 'index.js'
   },
+  devtool: 'source-map'
 };

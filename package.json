@@ -4,8 +4,7 @@
   "description": "模仿vuejs",
   "main": "mou.js",
   "scripts": {
-    "test": "jest test/",
-    "start": "webpack --mode development "
+    "start": "webpack -w --mode development "
   },
   "keywords": [
     "mou",
