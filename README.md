@@ -1,15 +1,17 @@
 # mou
 
 学习vuejs，学习响应式原理
-模仿学习vuejs
+实现了文本插值，一些简单指令
 
-## 代码
+## 运行
 
-代码在 src文件夹
+```
+npm start
+google-chrome src/index.html
+```
 
 ## 测试
 
 ```
-webpack -w
-firefox index.html
+npm test
 ```
