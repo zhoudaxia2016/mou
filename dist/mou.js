@@ -99,6 +99,9 @@ function compile(node,data){
   compileDirectives(node, data)
 
   // 遍历所有子节点
+  if (!node.childNodes) {
+    return
+  }
   var nodes = [].slice.call(node.childNodes).filter(item => item.nodeType === 1 || item.nodeType === 3);
   nodes.forEach(function(child){
     // 若是元素节点，递归编译
@@ -256,7 +259,7 @@ directives['m-for'] = {
 /*!********************!*\
   !*** ./src/mou.js ***!
   \********************/
-/*! no exports provided */
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -285,37 +288,16 @@ function Mou(options){
   }
   this.data = Object.assign(options.data,options.methods);
   Object(_observe__WEBPACK_IMPORTED_MODULE_0__["default"])(this.data);
-  Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(document.querySelector(this.el),this.data);
+  if (this.el) {
+    Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(document.querySelector(this.el),this.data);
+  }
 }
 
-var options = {
-  el: '#app',
-  data:{
-    title:'This is a title',
-    content:'This is content!!!',
-    number: 10,
-    ok: false,
-    color: ['red','blue','green', 'black'],
-    fruits: {apple:'apple',banana:'banana'},
-  },
-  methods:{
-    get: function(){return 'Great!';},
-    print: function(a){return a;},
-    add: function(){
-      this.number ++;
-    },
-    minus: function(n,e){console.log(e);this.number -= n;},
-  },
+Mou.prototype.mount = function (ele) {
+  Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(ele, this.data)
 }
 
-var mou = new Mou(options);
-
-mou.data.title = 'title'
-mou.data.ok = true;
-mou.data.get = function(){return 'Bad!';}
-mou.data.add = function(){
-  this.number += 5;
-}
+/* harmony default export */ __webpack_exports__["default"] = (Mou);
 
 
 /***/ }),

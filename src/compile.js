@@ -14,6 +14,9 @@ export default function compile(node,data){
   compileDirectives(node, data)
 
   // 遍历所有子节点
+  if (!node.childNodes) {
+    return
+  }
   var nodes = [].slice.call(node.childNodes).filter(item => item.nodeType === 1 || item.nodeType === 3);
   nodes.forEach(function(child){
     // 若是元素节点，递归编译
