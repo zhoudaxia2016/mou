@@ -46,8 +46,8 @@ var options = {
 var mou = new Mou(options);
 
 mou.data.title = 'title'
-mou.data.ok = true;
-mou.data.get = function(){return 'Bad!';}
+mou.data.ok = true
+mou.data.get = () => 'Bad!'
 mou.data.add = function(){
   this.number += 5;
 }
