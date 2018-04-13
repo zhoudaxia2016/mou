@@ -9,9 +9,3 @@
 npm start
 google-chrome src/index.html
 ```
-
-## 测试
-
-```
-npm test
-```

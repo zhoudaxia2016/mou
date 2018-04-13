@@ -11,15 +11,22 @@
     <p> 测试布尔值：{{ ok }} </p>
     <p> 测试数字相加：{{ number + 1}} </p>
     <input type="button" value="add" m-on:click="add">
-    <input type="button" value="minus" m-on:click="minus(3,$event)">
-    <input type="button" value="alert" m-on:click="alert(3)">
+    <input type="button" value="minus" m-on:click="minus(3, $event)">
+    <input type="button" value="alert" m-on:click="alert(number)">
+    <input type="button" value="event" m-on:click="console.log($event)">
     <p> 测试方法调用：{{ get() }}</p>
-    <p> 测试方法调用（带参数）：{{ print('somewords') }}</p>
     <p> 测试数组：{{ color[2] }}</p>
     <p m-for="i in color">color: {{ i }}</p>
     <p> 测试对象：{{ fruits.apple }}</p>
     <p m-show="ok">测试m-show ok</p>
     <p m-show="!ok">测试m-show no ok</p>
+    <p> 测试方法是否是响应式的：{{ getNumber() }}</p>
+    <!--
+    <p> 调用methodTestCache：{{ methodTestCache() }}</p>
+    <p> 调用methodTestCache：{{ methodTestCache() }}</p>
+    <p> 调用computedTestCache：{{ computedTestCache() }}</p>
+    <p> 调用computedTestCache：{{ computedTestCache() }}</p>
+    -->
   </div>
 
   <script src="index.js"></script>

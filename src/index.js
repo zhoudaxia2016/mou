@@ -9,23 +9,27 @@ let options = {
     ok: false,
     color: ['red','blue','green', 'black'],
     fruits: {apple: 'apple',banana: 'banana'},
+    ok: true,
+    a: 'hello'
   },
   methods:{
     get: function () { return 'Great!' },
-    print: function (a) { return a },
+    getNumber: function () { return this.number },
+    methodTestCache () {
+      console.log('Execute Method')
+      return this.a
+    },
     add: function () {
-      this.number ++;
+      this.number ++
     },
     minus: function (n) { this.number -= n },
   },
+  computed: {
+    computedTestCache () {
+      console.log('Execute computed')
+      return this.a
+    }
+  }
 }
 
 let mou = new Mou(options)
-
-mou.data.title = 'title'
-mou.data.ok = true
-mou.data.get = () => 'Bad!'
-mou.data.add = function(){
-  this.number += 5
-}
-

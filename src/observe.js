@@ -31,6 +31,7 @@ function defineReactive (data, key, val) {
     get () {
       if (Watcher.tmp){
         dep.addCb(Watcher.tmp)
+	Watcher.tmp = null
       }
       return val
     },

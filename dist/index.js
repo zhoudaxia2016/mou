@@ -125,11 +125,16 @@ function compileDirectives (node, data) {
       let [name, arg] = attr.nodeName.split(':')
       let value = attr.nodeValue
 
-      if (name in _directives__WEBPACK_IMPORTED_MODULE_1__["default"]) {
-	let cb = _directives__WEBPACK_IMPORTED_MODULE_1__["default"][name].callback
-	if (cb) {
-	  cb(node, arg, value, data)
+      let Directive = _directives__WEBPACK_IMPORTED_MODULE_1__["default"].find(dir => dir.prototype.name === name)
+      if (Directive) {
+	let code = 'with (data) { return ' + value + '}'
+	let fn = new Function('data', '$event', code)
+	let getVal = ($event) => fn(data, $event)
+	if (Directive.prototype.name === 'm-for') {
+	  getVal = () => value
 	}
+	let directive = new Directive(node, arg, getVal, data)
+	new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](directive.update.bind(directive))
       }
     })
   }
@@ -165,92 +170,130 @@ function compileText (node, data) {
 /*!***************************!*\
   !*** ./src/directives.js ***!
   \***************************/
-/*! exports provided: default */
+/*! exports provided: default, genDirWithType, DirType */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _watcher__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./watcher */ "./src/watcher.js");
-/* harmony import */ var _compile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./compile */ "./src/compile.js");
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "genDirWithType", function() { return genDirWithType; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DirType", function() { return DirType; });
+/* harmony import */ var _compile__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./compile */ "./src/compile.js");
 
 
+let dirTypes = []
 
-let directives = {}
+// 指令类型构造函数
+function DirType (name, bindFn, updateFn) {
 
-// m-show指令
-directives['m-show'] = {
+  this.name = name
 
-  callback (node, arg, value, data) {
+  // 若updateFn存在，则bindFn肯定存在，绑定bind
+  if (updateFn) {
+    this.bind = function () {
+      bindFn(this.node, this.arg)
+    }
+  // 否则，bindFn是updateFn，没有bindFn
+  } else {
+    updateFn = bindFn
+  }
 
-    let code = 'with(data){return ' + value + ';}';
-    var fn = new Function('data',code);
+  this.update = function () {
+    updateFn(this.node, this.arg, this.getVal, this.data)
+  }
+}
 
-    new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](function(){
-      let show = fn(data);
-      node.style.display = show ? '' : 'none';
+// 由指令类型生成指令类型实例
+function genDirWithType (dirType) {
+
+  function Dir (node, arg, getVal, data) {
+    this.node =node
+    this.arg = arg
+    this.getVal = getVal
+    this.data = data
+
+    if (this.bind) {
+      this.bind()
+    }
+  }
+
+  Dir.prototype = dirType
+
+  return Dir
+}
+
+let dirType
+
+dirType = new DirType('m-show', (node, arg, getVal, data) => {
+  node.style.display = getVal() ? '' : 'none'
+})
+
+dirTypes.push(dirType)
+
+dirType = new DirType('m-on',
+  (node, arg) => {
+
+    if (!arg) {
+      throw new Error('m-on指令需要参数！')
+    }
+  },
+  (node, arg, getVal, data) => {
+
+    node.addEventListener(arg, $event => {
+
+      // getVal里的匿名函数的$event参数需要传递进去
+      let value = getVal($event)
+      if (typeof value === 'function') {
+	// 因为value是由new Function新建函数返回的，丢失了this，所以还要绑定this
+	value.apply(data, [$event])
+      }
     })
   }
-}
+)
 
-// m-on指令，事件绑定
-directives['m-on'] = {
+dirTypes.push(dirType)
 
-  callback (node, arg, value, data) {
+dirType = new DirType('m-for', 
+  (node, arg) => {
 
-    let p = /m-on:([^.]+)(.*)?/
+    // 隐藏该节点。因为更新时要获取nextSibling，不能删除掉它
+    node.style.display = 'none'
+    node.removeAttribute('m-for')
+  },
+  (node, arg, getVal, data) => {
 
-    if (arg){
-
-      let code = ['with(data){']
-      code.push('node.addEventListener("')
-      code.push(arg)
-      code.push('",function($event){if (typeof ')
-      code.push(value)
-      code.push('=== "function"){')
-      code.push(value)
-      code.push('();}})}')
-      code = code.join('')
-
-      let fn = new Function('node','data',code)
-      new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](() => fn(node, data))
-    }
-  }
-}
-
-// m-for指令
-directives['m-for'] = {
-  callback (node, arg, value, data) {
+    // 获取循环对象和每项的标识符
+    let value = getVal()
     let p = /\s*(\S+)\s+in\s+(\S+)\s*/
     let item = p.exec(value)[1]
-    let list = p.exec(value)[2]
+    let list = data[p.exec(value)[2]]
 
-    let code = ['var list = data.' + list + ';']
-    code.push('for (var z = 0,len = list.length; z < len; z ++) {')
-    code.push('var newNode = node.cloneNode(true);')
-    code.push('newNode.removeAttribute("m-for");')
-    code.push('var oldValue = data.' + item + ';')
-    code.push('data.' + item + ' = list[z];')
-    code.push('compile(newNode, data);')
-    code.push('data.' + item + ' = oldValue;')
+    for (let z = 0, len = list.length; z < len; z ++) {
 
-    var next = node.nextElementSibling
-    if (next){
-      code.push('parent.insertBefore(newNode, next);}')
+      // 克隆节点并编译
+      let newNode = node.cloneNode(true)
+      newNode.style.display = ''
+      let oldVal = data[item]
+      data[item] = list[z]
+      Object(_compile__WEBPACK_IMPORTED_MODULE_0__["default"])(newNode, data)
+      data[item] = oldVal
+      
+      // 插入节点
+      let next = node.nextElementSibling
+      if (next) {
+        let a = node.parentNode.insertBefore(newNode, next)
+      } else {
+	let b = node.parentNode.appendChild(newNode)
+      }
     }
-    else {
-      code.push('parent.appendChild(newNode);}')
-    }
-
-    code = code.join('')
-    parent = node.parentNode
-    node = node.parentNode.removeChild(node)
-
-    let fn = new Function('node', 'parent', 'data', 'next', 'compile', code)
-    new _watcher__WEBPACK_IMPORTED_MODULE_0__["default"](() => fn(node, parent, data, next, _compile__WEBPACK_IMPORTED_MODULE_1__["default"]))
   }
-}
+)
 
-/* harmony default export */ __webpack_exports__["default"] = (directives);
+dirTypes.push(dirType)
+
+let Directives = dirTypes.map(item => genDirWithType(item))
+
+/* harmony default export */ __webpack_exports__["default"] = (Directives);
+
 
 
 /***/ }),
@@ -276,26 +319,30 @@ let options = {
     ok: false,
     color: ['red','blue','green', 'black'],
     fruits: {apple: 'apple',banana: 'banana'},
+    ok: true,
+    a: 'hello'
   },
   methods:{
     get: function () { return 'Great!' },
-    print: function (a) { return a },
+    getNumber: function () { return this.number },
+    methodTestCache () {
+      console.log('Execute Method')
+      return this.a
+    },
     add: function () {
-      this.number ++;
+      this.number ++
     },
     minus: function (n) { this.number -= n },
   },
+  computed: {
+    computedTestCache () {
+      console.log('Execute computed')
+      return this.a
+    }
+  }
 }
 
 let mou = new _mou__WEBPACK_IMPORTED_MODULE_0__["default"](options)
-
-mou.data.title = 'title'
-mou.data.ok = true
-mou.data.get = () => 'Bad!'
-mou.data.add = function(){
-  this.number += 5
-}
-
 
 
 /***/ }),
@@ -311,8 +358,10 @@ mou.data.add = function(){
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _observe__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./observe */ "./src/observe.js");
 /* harmony import */ var _compile__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./compile */ "./src/compile.js");
+/* harmony import */ var _watcher__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./watcher */ "./src/watcher.js");
 //var observe = require('./observe.js')
 //var compile = require('./compile.js')
+
 
 
 
@@ -327,19 +376,56 @@ function Mou(options){
    *                - {Object} methods
    */
 
-  this.el = options.el;
-  for (var fn in options.methods){
-    options.methods[fn] = options.methods[fn].bind(options.data);
+  this.el = options.el
+
+  // 设置响应式数据
+  Object(_observe__WEBPACK_IMPORTED_MODULE_0__["default"])(options.data)
+
+  this.data = Object.assign(options.data, options.methods, options.computed)
+
+  // 绑定methods的this为this.data
+  for (let fn in options.methods){
+    options.methods[fn] = options.methods[fn].bind(this.data)
   }
-  this.data = Object.assign(options.data,options.methods);
-  Object(_observe__WEBPACK_IMPORTED_MODULE_0__["default"])(this.data);
+  for (let fn in options.computed){
+    options.computed[fn] = options.computed[fn].bind(this.data)
+  }
+  observeComputed(options.computed)
+
+  // 编译
   if (this.el) {
-    Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(document.querySelector(this.el),this.data);
+    Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(document.querySelector(this.el), this.data)
   }
 }
 
 Mou.prototype.mount = function (ele) {
   Object(_compile__WEBPACK_IMPORTED_MODULE_1__["default"])(ele, this.data)
+}
+
+function observeComputed (computed) {
+  Object.keys(computed).forEach(key => {
+    let value = computed[key]
+    if (typeof value === 'function') {
+      let updated = true
+      let oldValue
+      new _watcher__WEBPACK_IMPORTED_MODULE_2__["default"](() => {
+	updated = true
+      })
+      console.log(computed, key)
+      Object.defineProperty(computed, key, {
+	enumerable: true,
+	configurable: false,
+	get () {
+	  console.log(updated)
+	  if (updated) {
+	    let oldValue = value()
+	    updated = false
+	  }
+	  return oldValue
+	}
+      })
+    }
+  })
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Mou);
@@ -390,6 +476,7 @@ function defineReactive (data, key, val) {
     get () {
       if (_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp){
         dep.addCb(_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp)
+	_watcher__WEBPACK_IMPORTED_MODULE_0__["default"].tmp = null
       }
       return val
     },
@@ -454,7 +541,7 @@ function Watcher (update) {
   this.update = update
   Watcher.tmp = this
   this.update()
-  Watcher.tmp = null
+  //Watcher.tmp = null
 }
 
 

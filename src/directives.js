@@ -1,79 +1,116 @@
-import Watcher from './watcher'
 import compile from './compile'
 
-let directives = {}
+let dirTypes = []
 
-// m-show指令
-directives['m-show'] = {
+// 指令类型构造函数
+function DirType (name, bindFn, updateFn) {
 
-  callback (node, arg, value, data) {
+  this.name = name
 
-    let code = 'with(data){return ' + value + ';}';
-    var fn = new Function('data',code);
+  // 若updateFn存在，则bindFn肯定存在，绑定bind
+  if (updateFn) {
+    this.bind = function () {
+      bindFn(this.node, this.arg)
+    }
+  // 否则，bindFn是updateFn，没有bindFn
+  } else {
+    updateFn = bindFn
+  }
 
-    new Watcher(function(){
-      let show = fn(data);
-      node.style.display = show ? '' : 'none';
+  this.update = function () {
+    updateFn(this.node, this.arg, this.getVal, this.data)
+  }
+}
+
+// 由指令类型生成指令类型实例
+function genDirWithType (dirType) {
+
+  function Dir (node, arg, getVal, data) {
+    this.node =node
+    this.arg = arg
+    this.getVal = getVal
+    this.data = data
+
+    if (this.bind) {
+      this.bind()
+    }
+  }
+
+  Dir.prototype = dirType
+
+  return Dir
+}
+
+let dirType
+
+dirType = new DirType('m-show', (node, arg, getVal, data) => {
+  node.style.display = getVal() ? '' : 'none'
+})
+
+dirTypes.push(dirType)
+
+dirType = new DirType('m-on',
+  (node, arg) => {
+
+    if (!arg) {
+      throw new Error('m-on指令需要参数！')
+    }
+  },
+  (node, arg, getVal, data) => {
+
+    node.addEventListener(arg, $event => {
+
+      // getVal里的匿名函数的$event参数需要传递进去
+      let value = getVal($event)
+      if (typeof value === 'function') {
+	// 因为value是由new Function新建函数返回的，丢失了this，所以还要绑定this
+	value.apply(data, [$event])
+      }
     })
   }
-}
+)
 
-// m-on指令，事件绑定
-directives['m-on'] = {
+dirTypes.push(dirType)
 
-  callback (node, arg, value, data) {
+dirType = new DirType('m-for', 
+  (node, arg) => {
 
-    let p = /m-on:([^.]+)(.*)?/
+    // 隐藏该节点。因为更新时要获取nextSibling，不能删除掉它
+    node.style.display = 'none'
+    node.removeAttribute('m-for')
+  },
+  (node, arg, getVal, data) => {
 
-    if (arg){
-
-      let code = ['with(data){']
-      code.push('node.addEventListener("')
-      code.push(arg)
-      code.push('",function($event){if (typeof ')
-      code.push(value)
-      code.push('=== "function"){')
-      code.push(value)
-      code.push('();}})}')
-      code = code.join('')
-
-      let fn = new Function('node','data',code)
-      new Watcher(() => fn(node, data))
-    }
-  }
-}
-
-// m-for指令
-directives['m-for'] = {
-  callback (node, arg, value, data) {
+    // 获取循环对象和每项的标识符
+    let value = getVal()
     let p = /\s*(\S+)\s+in\s+(\S+)\s*/
     let item = p.exec(value)[1]
-    let list = p.exec(value)[2]
+    let list = data[p.exec(value)[2]]
 
-    let code = ['var list = data.' + list + ';']
-    code.push('for (var z = 0,len = list.length; z < len; z ++) {')
-    code.push('var newNode = node.cloneNode(true);')
-    code.push('newNode.removeAttribute("m-for");')
-    code.push('var oldValue = data.' + item + ';')
-    code.push('data.' + item + ' = list[z];')
-    code.push('compile(newNode, data);')
-    code.push('data.' + item + ' = oldValue;')
+    for (let z = 0, len = list.length; z < len; z ++) {
 
-    var next = node.nextElementSibling
-    if (next){
-      code.push('parent.insertBefore(newNode, next);}')
+      // 克隆节点并编译
+      let newNode = node.cloneNode(true)
+      newNode.style.display = ''
+      let oldVal = data[item]
+      data[item] = list[z]
+      compile(newNode, data)
+      data[item] = oldVal
+      
+      // 插入节点
+      let next = node.nextElementSibling
+      if (next) {
+        let a = node.parentNode.insertBefore(newNode, next)
+      } else {
+	let b = node.parentNode.appendChild(newNode)
+      }
     }
-    else {
-      code.push('parent.appendChild(newNode);}')
-    }
-
-    code = code.join('')
-    parent = node.parentNode
-    node = node.parentNode.removeChild(node)
-
-    let fn = new Function('node', 'parent', 'data', 'next', 'compile', code)
-    new Watcher(() => fn(node, parent, data, next, compile))
   }
-}
+)
 
-export default directives
+dirTypes.push(dirType)
+
+let Directives = dirTypes.map(item => genDirWithType(item))
+
+export default Directives
+export { genDirWithType, DirType }

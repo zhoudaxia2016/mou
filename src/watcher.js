@@ -8,6 +8,6 @@ export default function Watcher (update) {
   this.update = update
   Watcher.tmp = this
   this.update()
-  Watcher.tmp = null
+  //Watcher.tmp = null
 }
 

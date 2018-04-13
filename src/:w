@@ -1,5 +1,5 @@
 import Watcher from './watcher'
-import Directives from './directives'
+import directives from './directives'
 
 export default function compile (node, data) {
   /**
@@ -40,16 +40,11 @@ function compileDirectives (node, data) {
       let [name, arg] = attr.nodeName.split(':')
       let value = attr.nodeValue
 
-      let Directive = Directives.find(dir => dir.prototype.name === name)
-      if (Directive) {
+      if (name in directives) {
 	let code = 'with (data) { return ' + value + '}'
-	let fn = new Function('data', '$event', code)
-	let getVal = ($event) => fn(data, $event)
-	if (Directive.prototype.name === 'm-for') {
-	  getVal = () => value
-	}
-	let directive = new Directive(node, arg, getVal, data)
-	new Watcher(directive.update.bind(directive))
+	let getVal = new Function('data', code)
+	let cb = directives[name].getCb(node, arg, getVal, data)
+	new Watcher(cb)
       }
     })
   }
